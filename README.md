@@ -47,3 +47,99 @@ interface BookRepository extends ElasticsearchRepository<Book, String> {
 }
 ```
 
+
+
+**注意事项**
+
+1. createIndex方法，并不会产生`mapping`；当执行save document时会根据传入的参数生成mapping,
+
+   如果参数author值是字符串，则mapping中的author(type=text)，不是keyword; 
+
+```java
+@Data
+@Document(indexName = "article", type = "_doc")
+public class Article {
+
+    private String id;
+
+    private String title;
+
+    @Field(type = FieldType.Keyword)
+    private String author;
+```
+
+```java
+template.createIndex(Article.class);
+```
+
+```json
+{
+
+    "state": "open",
+    "settings": {
+        "index": {
+            "refresh_interval": "1s",
+            "number_of_shards": "5",
+            "provided_name": "article",
+            "creation_date": "1580829766935",
+            "store": {
+                "type": "fs"
+            },
+            "number_of_replicas": "1",
+            "uuid": "0KjtD5LZTRGF4V3zT04U3g",
+            "version": {
+                "created": "7050299"
+            }
+        }
+    },
+    "mappings": { },
+  ...
+```
+
+执行`template.putMapping`方法后author(type=keyword)，但是另外一个问题产生，其他字段无type
+
+```java
+ template.putMapping(Article.class);
+```
+
+```json
+"mappings": {
+
+    "_doc": {
+        "properties": {
+            "author": {
+                "type": "keyword"
+            }
+        }
+    }
+```
+
+执行save document时会根据传入的参数更新mapping
+
+```java
+ Article article = new Article("Spring Data Elasticsearch", "tom");
+ articleService.index(article);
+```
+
+```json
+"mappings": {
+
+    "_doc": {
+        "properties": {
+            "author": {
+                "type": "keyword"
+            },
+            "title": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "ignore_above": 256,
+                        "type": "keyword"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+

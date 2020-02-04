@@ -25,10 +25,18 @@ public class Article {
 
     private String title;
 
+    @Field(type = FieldType.Keyword)
+    private String author;
+
     public Article() {
     }
 
     public Article(String title) {
         this.title = title;
+    }
+
+    public Article(String title, String author) {
+        this.title = title;
+        this.author = author;
     }
 }
